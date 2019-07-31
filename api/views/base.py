@@ -39,20 +39,21 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         if request.GET.get('id'):
-            user_id = int( request.GET.get('id') )
-            friend_relationships = Friendship.objects.filter(
-                Q( id_user1=user_id ) | Q( id_user2=user_id ), relationship='FRIENDS')
-            friends_ids = [ f.id_user1 if f.id_user2 == user_id else f.id_user2 for f in friend_relationships ]
+            try:
+                user_id = int( request.GET.get('id') )
+                friends_relationships = Friendship.objects.filter(
+                    Q( id_user1=user_id ) | Q( id_user2=user_id ), relationship='FRIENDS')
+                friends_ids = [ f.id_user1 if f.id_user2 == user_id else f.id_user2 for f in friends_relationships ]
 
-            queryset = queryset.filter( id__in=friends_ids )
+                queryset = queryset.filter( id__in=friends_ids )
+            except ValueError:
+                pass
 
         page = self.paginate_queryset(queryset)
         if page is not None:
-            # assert False, self.get_serializer()
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        # assert False, self.get_serializer
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
